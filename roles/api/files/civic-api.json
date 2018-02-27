@@ -1,0 +1,157 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Civic API",
+  "Parameters": {
+    "Cluster": {
+      "Type": "String",
+      "Description": "Cluster where API should be deployed",
+      "Default": "default"
+    },
+    "DesiredCount": {
+      "Type": "Number",
+      "Description": "Number of tasks to run",
+      "Default": 1
+    },
+    "ErrorTopicParameter": {
+      "Type": "String",
+      "Description": "ARN for api-errors SNS Topic",
+      "Default": "arn:aws:sns:us-west-2:335754127586:api-errors"
+    },
+    "Image": {
+      "Type": "String",
+      "Description": "Docker Image",
+      "Default": "civic-api:latest"
+    },
+    "StackName": {
+      "Type": "String",
+      "Description": "Stack Name",
+      "Default": "civic-api"
+    },
+    "StackPort": {
+      "Type": "Number",
+      "Description": "Port used by service",
+      "Default": 5000
+    }
+  },
+  "Resources": {
+    "Task": {
+      "Type": "AWS::ECS::TaskDefinition",
+      "Properties": {
+        "ContainerDefinitions": [{
+          "Name": {
+            "Ref": "StackName"
+          },
+          "Image": {
+            "Fn::Join": ["/", ["335754127586.dkr.ecr.us-west-2.amazonaws.com", {
+              "Ref": "Image"
+            }]]
+          },
+          "Memory": 256,
+          "PortMappings": [{
+            "ContainerPort": {
+              "Ref": "StackPort"
+            },
+            "HostPort": {
+              "Ref": "StackPort"
+            }
+          }],
+          "LogConfiguration": {
+            "LogDriver": "awslogs",
+            "Options": {
+              "awslogs-group": {
+                "Ref": "StackName"
+              },
+              "awslogs-region": "us-west-2"
+            }
+          }
+        }]
+      }
+    },
+    "LoadBalancer": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+        "Listeners": [{
+          "InstancePort": {
+            "Ref": "StackPort"
+          },
+          "InstanceProtocol": "HTTP",
+          "LoadBalancerPort": 80,
+          "Protocol": "HTTP"
+        }],
+        "Subnets": [
+          "subnet-fe4ba5b5",
+          "subnet-be01cec7",
+          "subnet-fe77c0a4"
+        ]
+      }
+    },
+    "Service": {
+      "Type": "AWS::ECS::Service",
+      "Properties": {
+        "Cluster": {
+          "Ref": "Cluster"
+        },
+        "DesiredCount": {
+          "Ref": "DesiredCount"
+        },
+        "LoadBalancers": [{
+          "ContainerName": {
+            "Ref": "StackName"
+          },
+          "ContainerPort": {
+            "Ref": "StackPort"
+          },
+          "LoadBalancerName": {
+            "Ref": "LoadBalancer"
+          }
+        }],
+        "Role": "ecsServiceRole",
+        "TaskDefinition": {
+          "Ref": "Task"
+        }
+      }
+    },
+    "CivicApiMemoryAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmDescription": "civic-api if Memory > 60% for 1 minutes",
+        "MetricName": "MemoryUtilization",
+        "Namespace": "AWS/ECS",
+        "ExtendedStatistic": "p95",
+        "Period": 60,
+        "EvaluationPeriods": 5,
+        "Threshold": 60,
+        "AlarmActions": [{
+          "Ref": "ErrorTopicParameter"
+        }],
+        "Dimensions": [{
+          "Name": "ServiceName",
+          "Value": {
+            "Ref": "Service"
+          }
+        }],
+        "ComparisonOperator": "GreaterThanThreshold"
+      }
+    }
+  },
+  "Outputs": {
+    "Task": {
+      "Description": "Task",
+      "Value": {
+        "Ref": "Task"
+      }
+    },
+    "LoadBalancer": {
+      "Description": "LoadBalancer",
+      "Value": {
+        "Ref": "LoadBalancer"
+      }
+    },
+    "Service": {
+      "Description": "Service",
+      "Value": {
+        "Ref": "Service"
+      }
+    }
+  }
+}

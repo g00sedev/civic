@@ -1,0 +1,17 @@
+---
+- name: Creates stack for civic api
+  cloudformation:
+    stack_name: "{{ stack_name }}"
+    region: "{{ region }}"
+    template: roles/api/files/civic-api.json
+    template_parameters:
+      APIDNSName: "?"
+      Cluster: default
+      DesiredCount: 1
+      Image: "{{ stack_name }}:latest"
+      StackName: "{{ stack_name }}"
+      StackPort: 5000
+  register: civic_api_stack
+
+- debug: var=civic_api_stack
+

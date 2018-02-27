@@ -1,0 +1,8 @@
+---
+version: 1.0.0
+
+dynamodb:
+  region: us-west-2
+  tables: 
+    users: tahoe-users
+    events: tahoe-events

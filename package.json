@@ -1,0 +1,38 @@
+{
+  "name": "civic-api",
+  "version": "1.0.0",
+  "description": "api for eye tracking service",
+  "main": "app.js",
+  "scripts": {
+    "test": "\"echo \\\"Error: no test specified\\\" && exit 1\"",
+    "pretest": "npm run build",
+    "postBuild": "npm run lint",
+    "lint": "jshint src/*.js src/db/*.js src/middlewares/*.js src/helpers/*.js src/models/*.js src/routes/*.js",
+    "start": "node lib/app.js",
+    "update_stack": "ansible-playbook civic-service.yml",
+    "build": "babel src --out-dir lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/g00sedev/civic.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/g00sedev/civic/issues"
+  },
+  "homepage": "https://github.com/g00sedev/civic#readme",
+  "dependencies": {
+    "aws-sdk": "^2.202.0",
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-preset-es2015": "^6.24.1",
+    "body-parser": "^1.18.2",
+    "cors": "^2.8.4",
+    "express": "^4.16.2",
+    "js-yaml": "^3.10.0",
+    "jshint": "^2.9.5",
+    "lodash": "^4.17.5",
+    "uuid": "^3.2.1"
+  }
+}
